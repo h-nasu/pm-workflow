@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pm_user
+      POSTGRES_PASSWORD: pm_pass
+      POSTGRES_DB: pm_workflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pm_user -d pm_workflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    command: uvicorn pm_workflow.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://pm_user:pm_pass@postgres:5432/pm_workflow
+      FIREFLIES_API_KEY: ${FIREFLIES_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      APP_ENV: development
+      LOG_LEVEL: INFO
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

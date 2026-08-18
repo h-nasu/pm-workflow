@@ -1,0 +1,17 @@
+# Sample Meeting Transcript
+
+**Project:** Phoenix Redesign
+**Date:** 2024-01-15
+**Attendees:** Alice (PM), Bob (Dev), Carol (Design), Dave (Client)
+
+Alice: Thanks everyone for joining. Let's start with the Phoenix redesign status.
+Bob: The backend API is 80% complete. We're waiting on the final auth spec from Carol.
+Carol: I'll have the auth mockups ready by Wednesday.
+Dave: The client is asking about the launch date. Can we commit to February 15th?
+Alice: February 15th is tight. We need to resolve the payment integration dependency first.
+Bob: Payment provider docs are unclear. I need clarification on webhook format.
+Alice: Action item: Bob to reach out to payment provider by Tuesday.
+Carol: Also, the design system needs client approval. I'll send the link today.
+Alice: Good. Risk: If payment integration isn't clarified by end of week, we slip to February 22nd.
+Dave: Understood. I'll escalate if needed.
+Alice: Next steps: Carol sends mockups today, Bob contacts payment provider Tuesday, we review Wednesday.

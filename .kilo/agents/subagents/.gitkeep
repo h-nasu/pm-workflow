@@ -1,0 +1,7 @@
+Project-specific subagents go in this directory.
+
+Each subagent file defines a specialized agent scoped to a specific project concern.
+
+Examples:
+- fireflies.md - Agent for meeting note extraction and action items
+- backlog.md - Agent for backlog management and prioritization

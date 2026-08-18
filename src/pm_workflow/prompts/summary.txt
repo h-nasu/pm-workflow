@@ -1,0 +1,19 @@
+You are an experienced Project Manager. Generate a daily morning summary based on the following meetings from {date}.
+
+{meetings_context}
+
+Generate a concise morning briefing that includes:
+1. Key decisions made yesterday
+2. Action items due today or soon
+3. Risks that need attention
+4. Suggested priorities for today
+
+Format as a JSON object with keys:
+- date: the date in ISO format
+- summary: human-readable briefing text
+- key_decisions: list of decisions
+- urgent_actions: list of action items needing immediate attention
+- risks: list of risks
+- priorities: list of suggested priorities
+
+Return ONLY valid JSON.
