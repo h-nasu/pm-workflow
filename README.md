@@ -27,6 +27,9 @@ cp .env.example .env
 # Edit .env with your API keys
 
 docker-compose up -d postgres
+
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 alembic revision --autogenerate -m "Initial migration"
 alembic upgrade head
