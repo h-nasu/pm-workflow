@@ -22,3 +22,4 @@ class Meeting(TimestampedModel):
     transcript_url: Mapped[str] = mapped_column(String(1000), nullable=True)
 
     analysis: Mapped["MeetingAnalysis"] = relationship("MeetingAnalysis", back_populates="meeting", uselist=False)  # noqa: F821
+    summary: Mapped["MeetingSummary"] = relationship("MeetingSummary", back_populates="meeting", uselist=False)  # noqa: F821

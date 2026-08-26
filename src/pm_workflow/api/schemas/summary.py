@@ -1,14 +1,13 @@
-from datetime import date, datetime
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
 
 
-class DailySummaryResponse(BaseModel):
+class MeetingSummaryResponse(BaseModel):
     id: UUID
-    date: date
+    meeting_id: UUID
     summary_text: str
-    meeting_count: int
     created_at: datetime
     updated_at: datetime
 

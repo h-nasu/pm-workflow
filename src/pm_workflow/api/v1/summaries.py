@@ -1,36 +1,33 @@
-from datetime import date, datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from pm_workflow.api.deps import get_db
-from pm_workflow.api.schemas.summary import DailySummaryResponse
+from pm_workflow.api.schemas.summary import MeetingSummaryResponse
 from pm_workflow.integrations.llm.gemini import GeminiProvider
 from pm_workflow.integrations.llm.prompt_manager import PromptManager
-from pm_workflow.repositories import meeting_repo, summary_repo
+from pm_workflow.repositories import summary_repo
 from pm_workflow.services.summary import SummaryService
 
 router = APIRouter()
 
 
-@router.get("/daily", response_model=DailySummaryResponse)
-def get_daily_summary(target_date: date, db: Session = Depends(get_db)):
-    summary = summary_repo.get_by_date(db, target_date)
+@router.get("/meeting/{meeting_id}", response_model=MeetingSummaryResponse)
+def get_meeting_summary(meeting_id: UUID, db: Session = Depends(get_db)):
+    summary = summary_repo.get_by_meeting_id(db, meeting_id)
     if not summary:
         raise HTTPException(status_code=404, detail="Summary not found")
-    return DailySummaryResponse.model_validate(summary)
+    return MeetingSummaryResponse.model_validate(summary)
 
 
-@router.post("/daily/generate", response_model=DailySummaryResponse)
-async def generate_daily_summary(target_date: date, db: Session = Depends(get_db)):
-    start = datetime.combine(target_date, datetime.min.time())
-    end = datetime.combine(target_date, datetime.max.time())
-    meetings = meeting_repo.list_by_date_range(db, start_date=start, end_date=end)
+@router.post("/meeting/{meeting_id}/generate", response_model=MeetingSummaryResponse)
+async def generate_meeting_summary(meeting_id: UUID, db: Session = Depends(get_db)):
     llm = GeminiProvider()
     prompt_manager = PromptManager()
     summary_service = SummaryService(llm=llm, prompt_manager=prompt_manager)
     try:
-        summary = await summary_service.generate_daily_summary(db, target_date, meetings)
+        summary = await summary_service.generate_meeting_summary(db, meeting_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    return DailySummaryResponse.model_validate(summary)
+    return MeetingSummaryResponse.model_validate(summary)

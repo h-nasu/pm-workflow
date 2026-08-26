@@ -1,19 +1,27 @@
-You are an experienced Project Manager. Generate a daily morning summary based on the following meetings from {date}.
+You are an experienced Project Manager. Generate a meeting summary for the following meeting.
 
-{meetings_context}
+Meeting: {meeting_title}
+Date: {meeting_date}
 
-Generate a concise morning briefing that includes:
-1. Key decisions made yesterday
-2. Action items due today or soon
-3. Risks that need attention
-4. Suggested priorities for today
+{context}
+
+Generate a concise meeting summary that includes:
+1. Key decisions made
+2. Action items and owners
+3. Risks identified
+4. Dependencies and blockers
+5. Open questions
+6. Suggested next actions
 
 Format as a JSON object with keys:
-- date: the date in ISO format
-- summary: human-readable briefing text
+- meeting_title: the meeting title
+- meeting_date: the date in ISO format
+- summary: human-readable summary text
 - key_decisions: list of decisions
-- urgent_actions: list of action items needing immediate attention
+- action_items: list of action items
 - risks: list of risks
-- priorities: list of suggested priorities
+- dependencies: list of dependencies
+- open_questions: list of open questions
+- suggested_next_actions: list of suggested next actions
 
 Return ONLY valid JSON.
