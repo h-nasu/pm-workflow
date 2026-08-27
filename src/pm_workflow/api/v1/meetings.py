@@ -6,16 +6,24 @@ from tenacity import RetryError
 
 from pm_workflow.api.deps import get_db
 from pm_workflow.api.schemas.analysis import AnalysisResponse
-from pm_workflow.api.schemas.meeting import MeetingResponse
+from pm_workflow.api.schemas.meeting import ManualMeetingCreate, MeetingResponse
 from pm_workflow.core.exceptions import ExternalAPIError
 from pm_workflow.integrations.llm.gemini import GeminiProvider
 from pm_workflow.integrations.llm.prompt_manager import PromptManager
 from pm_workflow.models.meeting import Meeting
 from pm_workflow.repositories import analysis_repo, meeting_repo
 from pm_workflow.services.analysis import AnalysisService
+from pm_workflow.services.meeting import ManualMeetingService
 from pm_workflow.services.sync import SyncService
 
 router = APIRouter()
+
+
+@router.post("/manual", response_model=MeetingResponse, summary="Create a meeting from provided transcript")
+def create_manual_meeting(payload: ManualMeetingCreate, db: Session = Depends(get_db)):
+    service = ManualMeetingService()
+    meeting = service.create_from_payload(db, payload)
+    return meeting
 
 
 @router.get("/", response_model=list[MeetingResponse])
