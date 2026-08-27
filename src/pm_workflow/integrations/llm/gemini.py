@@ -11,7 +11,10 @@ from pm_workflow.integrations.llm.base import BaseLLMProvider
 class GeminiProvider(BaseLLMProvider):
     def __init__(self):
         self.settings = get_settings()
-        self.client = genai.Client(api_key=self.settings.GEMINI_API_KEY)
+        self.client = genai.Client(
+            api_key=self.settings.GEMINI_API_KEY,
+            http_options=types.HttpOptions(timeout=60000),
+        )
         self.model = "gemini-3.6-flash"
 
     async def generate(self, prompt: str, schema: dict[str, Any] | None = None) -> dict[str, Any]:

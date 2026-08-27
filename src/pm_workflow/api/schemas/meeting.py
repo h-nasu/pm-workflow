@@ -26,6 +26,10 @@ class ManualMeetingCreate(BaseModel):
     participants: dict[str, Any] = Field(default_factory=dict, json_schema_extra={"example": {"personA": True}})
 
 
+class MeetingExtractRequest(BaseModel):
+    text: str = Field(..., min_length=1, description="Raw meeting text for LLM extraction")
+
+
 class MeetingResponse(MeetingBase):
     id: UUID
     fireflies_id: str

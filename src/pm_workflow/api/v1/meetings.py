@@ -6,23 +6,48 @@ from tenacity import RetryError
 
 from pm_workflow.api.deps import get_db
 from pm_workflow.api.schemas.analysis import AnalysisResponse
-from pm_workflow.api.schemas.meeting import ManualMeetingCreate, MeetingResponse
-from pm_workflow.core.exceptions import ExternalAPIError
+from pm_workflow.api.schemas.meeting import (
+    ManualMeetingCreate,
+    MeetingExtractRequest,
+    MeetingResponse,
+)
+from pm_workflow.config import get_settings
+from pm_workflow.core.exceptions import ExternalAPIError, LLMError, ValidationError
 from pm_workflow.integrations.llm.gemini import GeminiProvider
 from pm_workflow.integrations.llm.prompt_manager import PromptManager
 from pm_workflow.models.meeting import Meeting
 from pm_workflow.repositories import analysis_repo, meeting_repo
 from pm_workflow.services.analysis import AnalysisService
-from pm_workflow.services.meeting import ManualMeetingService
+from pm_workflow.services.meeting import LLMMeetingService, ManualMeetingService
 from pm_workflow.services.sync import SyncService
 
 router = APIRouter()
+
+
+def _require_llm_configured() -> None:
+    if not get_settings().GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="LLM provider not configured: set GEMINI_API_KEY")
 
 
 @router.post("/manual", response_model=MeetingResponse, summary="Create a meeting from provided transcript")
 def create_manual_meeting(payload: ManualMeetingCreate, db: Session = Depends(get_db)):
     service = ManualMeetingService()
     meeting = service.create_from_payload(db, payload)
+    return meeting
+
+
+@router.post("/extract", response_model=MeetingResponse, summary="Create a meeting from text using LLM extraction")
+async def extract_meeting(payload: MeetingExtractRequest, db: Session = Depends(get_db)):
+    _require_llm_configured()
+    llm = GeminiProvider()
+    prompt_manager = PromptManager()
+    service = LLMMeetingService(llm=llm, prompt_manager=prompt_manager)
+    try:
+        meeting = await service.create_from_text(db, payload.text)
+    except (LLMError, ValidationError) as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
     return meeting
 
 
@@ -45,6 +70,7 @@ async def sync_meetings(
     end_date: datetime = Query(..., description="End of the date range to sync (ISO 8601, e.g. 2024-12-31T23:59:59)"),
     db: Session = Depends(get_db),
 ):
+    _require_llm_configured()
     llm = GeminiProvider()
     prompt_manager = PromptManager()
     analysis_service = AnalysisService(llm=llm, prompt_manager=prompt_manager)
@@ -63,6 +89,7 @@ async def sync_meetings(
 
 @router.post("/{meeting_id}/analyze", response_model=AnalysisResponse)
 async def analyze_meeting(meeting_id: str, db: Session = Depends(get_db)):
+    _require_llm_configured()
     meeting = db.get(Meeting, meeting_id)
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")

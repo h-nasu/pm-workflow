@@ -97,3 +97,70 @@ def test_create_manual_meeting_derives_title_from_transcript():
 def test_create_manual_meeting_requires_transcript():
     response = client.post("/api/v1/meetings/manual", json={"transcript": ""})
     assert response.status_code == 422
+
+
+def test_extract_meeting(monkeypatch):
+    class FakeLLM:
+        async def generate(self, prompt, schema=None):
+            return {
+                "title": "Project Kickoff",
+                "date": "2024-03-10T09:00:00",
+                "duration_minutes": 45,
+                "participants": ["Alice", "Bob"],
+                "transcript": "Kickoff notes",
+            }
+
+    class FakePromptManager:
+        def load(self, name):
+            return "Meeting text: {text}"
+
+    monkeypatch.setattr("pm_workflow.api.v1.meetings.GeminiProvider", lambda: FakeLLM())
+    monkeypatch.setattr("pm_workflow.api.v1.meetings.PromptManager", lambda: FakePromptManager())
+
+    response = client.post("/api/v1/meetings/extract", json={"text": "Kickoff with Alice and Bob"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["title"] == "Project Kickoff"
+    assert data["fireflies_id"].startswith("manual-")
+    assert data["participants"] == {"Alice": True, "Bob": True}
+
+
+def test_extract_meeting_requires_text():
+    response = client.post("/api/v1/meetings/extract", json={"text": ""})
+    assert response.status_code == 422
+
+
+def test_extract_meeting_without_api_key_returns_503(monkeypatch):
+    from pm_workflow.config import Settings
+
+    monkeypatch.setattr(
+        "pm_workflow.api.v1.meetings.get_settings",
+        lambda: Settings(GEMINI_API_KEY="", DATABASE_URL="sqlite://"),
+    )
+    response = client.post("/api/v1/meetings/extract", json={"text": "some notes"})
+    assert response.status_code == 503
+
+
+def test_sync_without_api_key_returns_503(monkeypatch):
+    from pm_workflow.config import Settings
+
+    monkeypatch.setattr(
+        "pm_workflow.api.v1.meetings.get_settings",
+        lambda: Settings(GEMINI_API_KEY="", DATABASE_URL="sqlite://"),
+    )
+    response = client.post(
+        "/api/v1/meetings/sync",
+        params={"start_date": "2024-01-01T00:00:00", "end_date": "2024-12-31T23:59:59"},
+    )
+    assert response.status_code == 503
+
+
+def test_analyze_without_api_key_returns_503(monkeypatch):
+    from pm_workflow.config import Settings
+
+    monkeypatch.setattr(
+        "pm_workflow.api.v1.meetings.get_settings",
+        lambda: Settings(GEMINI_API_KEY="", DATABASE_URL="sqlite://"),
+    )
+    response = client.post(f"/api/v1/meetings/{UUID('00000000-0000-0000-0000-000000000000')}/analyze")
+    assert response.status_code == 503

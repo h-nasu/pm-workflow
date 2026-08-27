@@ -85,6 +85,7 @@ src/pm_workflow/
 | `GET` | `/api/v1/meetings/{id}` | Get meeting detail |
 | `POST` | `/api/v1/meetings/sync` | Sync from Fireflies |
 | `POST` | `/api/v1/meetings/manual` | Create a meeting from a provided transcript |
+| `POST` | `/api/v1/meetings/extract` | Create a meeting from text using LLM extraction |
 | `POST` | `/api/v1/meetings/{id}/analyze` | Analyze meeting |
 | `GET` | `/api/v1/search/?q={query}` | Search meetings by title or transcript |
 | `GET` | `/api/v1/analysis/` | List meeting analyses |

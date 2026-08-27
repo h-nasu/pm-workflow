@@ -39,3 +39,26 @@ async def test_gemini_provider_generate_without_schema(mock_genai_client):
         call_kwargs = mock_genai_client.models.generate_content.call_args.kwargs
         assert call_kwargs["config"].response_json_schema is None
         assert call_kwargs["config"].response_mime_type == "text/plain"
+
+
+def test_gemini_provider_configures_request_timeout_in_ms():
+    from unittest.mock import patch
+
+    from google.genai import types
+
+    captured = {}
+
+    def fake_client(api_key=None, http_options=None, **kwargs):
+        captured["http_options"] = http_options
+        return MagicMock()
+
+    with patch("pm_workflow.integrations.llm.gemini.genai.Client", fake_client), patch(
+        "pm_workflow.integrations.llm.gemini.get_settings"
+    ) as mock_settings:
+        mock_settings.return_value.GEMINI_API_KEY = "test-key"
+        GeminiProvider()
+
+    assert isinstance(captured.get("http_options"), types.HttpOptions)
+    # HttpOptions.timeout is in milliseconds; must be large enough to allow normal
+    # LLM latency (seconds) but bounded so a blocked network cannot hang forever.
+    assert captured["http_options"].timeout >= 30000
